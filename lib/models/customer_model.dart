@@ -37,4 +37,21 @@ class Customer {
       balance: (map['balance'] ?? 0.0).toDouble(),
     );
   }
+
+  // Create a new Customer object with updated properties
+  Customer copyWith({
+    int? id,
+    String? name,
+    String? mobile,
+    String? address,
+    double? balance,
+  }) {
+    return Customer(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      mobile: mobile ?? this.mobile,
+      address: address ?? this.address,
+      balance: balance ?? this.balance,
+    );
+  }
 }

@@ -8,7 +8,6 @@ import 'dart:io';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper.instance.database; // Ensure database initialization
-  await DatabaseHelper.instance.printDatabasePath();
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,

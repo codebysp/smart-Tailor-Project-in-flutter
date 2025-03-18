@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smarttailor/core/customer_repository.dart';
 import '../models/customer_model.dart';
 import '../core/database_helper.dart';
+import '../widgets/CustomerFormDialog.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
@@ -29,40 +31,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     });
   }
 
-  void _addBalance() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        TextEditingController amountController = TextEditingController();
-        return AlertDialog(
-          title: Text("Add Balance"),
-          content: TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: "Enter amount"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                double amount = double.tryParse(amountController.text) ?? 0.0;
-                setState(() {
-                  _balance += amount;
-                });
-                // Update the database (to be implemented)
-                Navigator.pop(context);
-              },
-              child: Text("Add"),
-            ),
-          ],
-        );
-      },
+  // Function to refresh the customer details after editing
+  Future<void> _refreshCustomerDetails() async {
+    final customerRepository = CustomerRepository();
+
+    final updatedCustomer = await customerRepository.getCustomer(
+      widget.customer.id!,
     );
+    if (updatedCustomer != null) {
+      setState(() {
+        widget.customer.name = updatedCustomer.name;
+        widget.customer.mobile = updatedCustomer.mobile;
+        widget.customer.address = updatedCustomer.address;
+        _balance = updatedCustomer.balance;
+      });
+    }
   }
 
   @override
@@ -112,18 +95,26 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           FloatingActionButton(
             heroTag: "editCustomer",
             onPressed: () {
-              // Navigate to edit customer screen (to be implemented)
+              showDialog(
+                context: context,
+                builder:
+                    (context) => Customerformdialog(
+                      customer: widget.customer, // Pass the customer to edit
+                      onSuccess: () {
+                        _refreshCustomerDetails(); // Refresh the screen to show updates
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${widget.customer.name} updated'),
+                          ),
+                        );
+                      },
+                    ),
+              );
             },
             tooltip: "Edit Customer",
             child: Icon(Icons.edit),
           ),
           SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "addBalance",
-            onPressed: _addBalance,
-            tooltip: "Add Balance",
-            child: Icon(Icons.add),
-          ),
         ],
       ),
     );

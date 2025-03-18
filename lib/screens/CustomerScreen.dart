@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/customer_model.dart';
 import '../core/database_helper.dart';
 import 'customer_detail_screen.dart';
+import 'package:flutter/services.dart';
 import '../widgets/CustomerFormDialog.dart';
+import '../core/customer_repository.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -14,6 +16,7 @@ class CustomerListScreen extends StatefulWidget {
 class _CustomerListScreenState extends State<CustomerListScreen> {
   List<Customer> _customers = [];
   List<Customer> _filteredCustomers = [];
+
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -24,20 +27,30 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   }
 
   Future<void> _loadCustomers() async {
-    final customers = await DatabaseHelper.instance.getCustomers();
+    final customerRepository = CustomerRepository();
+    final customers = await customerRepository.getCustomers();
     setState(() {
       _customers = customers;
       _filteredCustomers = customers;
     });
   }
 
+  void _addNewCustomer() {
+    showDialog(
+      context: context,
+      builder: (context) => Customerformdialog(onSuccess: _loadCustomers),
+    );
+  }
+
   void _filterCustomers() {
     String query = _searchController.text.toLowerCase();
     setState(() {
       _filteredCustomers =
-          _customers
-              .where((customer) => customer.name.toLowerCase().contains(query))
-              .toList();
+          _customers.where((customer) {
+            final nameLower = customer.name.toLowerCase();
+            final mobileLower = customer.mobile.toLowerCase();
+            return nameLower.contains(query) || mobileLower.contains(query);
+          }).toList();
     });
   }
 
@@ -82,14 +95,22 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => Customerformdialog(onSuccess: _loadCustomers),
-          );
+      floatingActionButton: Shortcuts(
+        shortcuts: <LogicalKeySet, Intent>{
+          LogicalKeySet(LogicalKeyboardKey.f2): const ActivateIntent(),
         },
-        child: Icon(Icons.add),
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            ActivateIntent: CallbackAction<ActivateIntent>(
+              onInvoke: (ActivateIntent intent) => _addNewCustomer(),
+            ),
+          },
+          child: FloatingActionButton(
+            onPressed: _addNewCustomer,
+            child: const Icon(Icons.add),
+            tooltip: 'Add New Customer (F2)', // Indicate the shortcut
+          ),
+        ),
       ),
     );
   }

@@ -38,37 +38,20 @@ class DatabaseHelper {
         balance REAL NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE products(
+        product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_type TEXT CHECK(product_type IN ('Service',Product)) NOT NULL,
+        product_name TEXT NOT NULL,
+        product_description TEXT,
+        purchase_rate REAL,
+        selling_rate REAL NOT NULL,
+        labour_charge REAL,
+        comapny_name TEXT,
+      )
+''');
   }
 
-  Future<int> insertCustomer(Customer customer) async {
-    final db = await instance.database;
-    return await db.insert('customers', customer.toMap());
-  }
 
-  Future<List<Customer>> getCustomers() async {
-    final db = await instance.database;
-    final result = await db.query('customers');
-    return result.map((map) => Customer.fromMap(map)).toList();
-  }
-
-  Future<int> updateCustomer(Customer customer, int id) async {
-    final db = await instance.database;
-    return await db.update(
-      'customers',
-      customer.toMap(),
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteCustomer(int id) async {
-    final db = await instance.database;
-    return await db.delete('customers', where: 'id = ?', whereArgs: [id]);
-  }
-
-  Future<void> printDatabasePath() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'smart_tailor.db');
-    print('Database Path: $path');
-  }
 }

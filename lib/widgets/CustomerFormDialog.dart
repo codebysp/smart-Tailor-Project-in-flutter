@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smarttailor/core/customer_repository.dart';
 import '../core/database_helper.dart';
 import '../models/customer_model.dart';
 
@@ -33,7 +34,7 @@ class _CustomerformdialogState extends State<Customerformdialog> {
       text: widget.customer?.address ?? '',
     );
     _balanceController = TextEditingController(
-      text: widget.customer?.balance.toString() ?? '0.0',
+      text: widget.customer?.balance?.toString() ?? '0.0',
     );
   }
 
@@ -43,7 +44,6 @@ class _CustomerformdialogState extends State<Customerformdialog> {
       title: Text(widget.customer == null ? 'Add Customer' : 'Edit Customer'),
       content: Form(
         key: _formKey,
-
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -69,7 +69,6 @@ class _CustomerformdialogState extends State<Customerformdialog> {
           onPressed: () => Navigator.pop(context),
           child: Text('Cancel'),
         ),
-
         ElevatedButton(onPressed: _saveCustomer, child: Text('Save')),
       ],
     );
@@ -100,8 +99,11 @@ class _CustomerformdialogState extends State<Customerformdialog> {
   }
 
   Future<void> _saveCustomer() async {
+    final customerRepository = CustomerRepository();
+
     if (_formKey.currentState?.validate() ?? false) {
       final customer = Customer(
+        id: widget.customer?.id, // Ensure ID is assigned when editing
         name: _nameController.text,
         mobile: _mobileController.text,
         address: _addressController.text,
@@ -109,16 +111,12 @@ class _CustomerformdialogState extends State<Customerformdialog> {
       );
 
       if (widget.customer == null) {
-        await DatabaseHelper.instance.insertCustomer(customer);
+        await customerRepository.insertCustomer(customer);
       } else {
-        await DatabaseHelper.instance.updateCustomer(
-          customer,
-          widget.customer!.id!,
-        );
+        await customerRepository.updateCustomer(customer, customer.id!);
       }
-      if (widget.onSuccess != null) {
-        widget.onSuccess!();
-      }
+
+      widget.onSuccess?.call();
       Navigator.pop(context);
     }
   }
